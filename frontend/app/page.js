@@ -1,11 +1,11 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import axios from "axios";
 
 // Helper components for displaying messages
 const HumanMessage = ({ text }) => (
   <div className="flex justify-end">
-    <div className="bg-blue-600 text-white rounded-lg p-3 max-w-[70%] shadow-sm">
+    <div className="bg-blue-600 text-black rounded-lg p-3 max-w-[70%] shadow-sm">
       <p className="text-sm">{text}</p>
     </div>
   </div>
@@ -47,12 +47,46 @@ export default function Home() {
     }
   }, [input]);
 
+  const handleEnterSubmit = useCallback(async () => {
+    if (!input.trim()) return; // Ignore empty input
+
+    setIsLoading(true);
+    setMessages((prev) => [...prev, { type: "human", text: input }]); // Add user message to chat history
+
+    try {
+      // Send input to the backend API (using /answer endpoint)
+      const response = await axios.post("/api/answer", { input });
+      const result = response.data.result;
+
+      // Add Gemini response to chat history
+      setMessages((prev) => [...prev, { type: "gemini", text: result }]);
+    } catch (error) {
+      console.error("Error processing input:", error);
+      setMessages((prev) => [...prev, { type: "gemini", text: "Error processing your request. Please try again." }]);
+    } finally {
+      setIsLoading(false);
+      setInput(""); // Clear input field
+    }
+  }, [input]);
+
+  // Add event listener for the Enter key
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Enter" && !isLoading) {
+        handleEnterSubmit();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleEnterSubmit, isLoading]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex">
       {/* Sidebar */}
       <div className="w-64 bg-white border-r border-gray-200 p-6 shadow-sm">
         <h1 className="text-xl font-bold text-gray-900">Multimodal LLM</h1>
-        <p className="text-sm text-gray-500 mt-2">Your AI-powered assistant</p>
+        <p className="text-sm text-gray-500 mt-2">Assistant at service</p>
       </div>
 
       {/* Main Chat Window */}

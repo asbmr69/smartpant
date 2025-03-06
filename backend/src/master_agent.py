@@ -1,13 +1,13 @@
-from gemini_realtime_api import GeminiRealtimeAPI  # Import the Gemini API client
+from .gemini_realtime_api import GeminiRealtimeAPI  # Import the Gemini API client
 
 class MasterAgent:
-    def __init__(self, coder_agent, assistent_agent, computer_agent, api_key: str):
+    def __init__(self, coder_agent=None, assistant_agent=None, computer_agent=None):
         """
         Initialize the Master Agent with references to the sub-agents and Gemini API client.
         """
-        self.gemini = GeminiRealtimeAPI(api_key)  # Initialize Gemini API client
+        self.gemini = GeminiRealtimeAPI()  # Initialize Gemini API client
         self.coder_agent = coder_agent  # Coder Agent instance
-        self.assistent_agent = assistent_agent # Browser Agent instance
+        self.assistant_agent = assistant_agent # assistant Agent instance
         self.computer_agent = computer_agent  # Computer Agent instance
 
     def process_input(self, user_input: str) -> str:
@@ -35,7 +35,7 @@ class MasterAgent:
         # Example logic: Check if the task involves coding, browsing, and system operations
         return (
             "code" in task_description.lower()
-            and "browse" in task_description.lower()
+            and "assist" in task_description.lower()
             and "computer" in task_description.lower()
         )
 
@@ -45,13 +45,13 @@ class MasterAgent:
         """
         print("Handling collaborative task...")
 
-        # Step 1: Browser Agent fetches data
-        print("Invoking Browser Agent to fetch data...")
-        data_from_browser = self.browser_agent.process(task_description)
+        # Step 1: assistant Agent fetches data
+        print("Invoking assistant Agent to fetch data...")
+        data_from_assistant = self.assistant_agent.process(task_description)
 
         # Step 2: Coder Agent processes the fetched data
         print("Invoking Coder Agent to process data...")
-        code_result = self.coder_agent.process(data_from_browser)
+        code_result = self.coder_agent.process(data_from_assistant)
 
         # Step 3: Computer Agent executes the generated code or commands
         print("Invoking Computer Agent to execute commands...")
@@ -68,8 +68,8 @@ class MasterAgent:
             print("Delegating to Coder Agent...")
             return self.coder_agent.process(task_description)
         elif "browse" in task_description.lower() or "search" in task_description.lower():
-            print("Delegating to Browser Agent...")
-            return self.browser_agent.process(task_description)
+            print("Delegating to assistant Agent...")
+            return self.assistant_agent.process(task_description)
         elif "computer" in task_description.lower() or "system" in task_description.lower():
             print("Delegating to Computer Agent...")
             return self.computer_agent.process(task_description)
